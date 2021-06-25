@@ -1,0 +1,320 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{a4paper}
+\usepackage[pdftex]{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{amsmath}
+\usepackage{verbatim}
+\usepackage{hyperref}
+
+\topmargin 0.0cm
+\oddsidemargin 0.2cm
+\textwidth 16cm
+\textheight 21cm
+\footskip 1.0cm
+
+%TODO put the numbers for the parameters
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{The Peter-Dilbert principles: Computational study of the impact of promotion}
+\author{
+Georges Dib$^{\ast}$\\
+\\
+\normalsize{$^\ast$E-mail: \href{mailto:georges.dib@polytechnique.org}{georges.dib@polytechnique.org}}
+}
+
+%\date{}                                          % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\abstract{Two seemingly paradoxical principles have been stated in the second half of the twentieth century explaining corporate hierarchy: Dilbert and Peter principle. This article will present a rather simple model of the corporate hierarchy and will examine the different factors involved and model their interactions. We will agent based simulations to examine those principles and their consequence on the corporate governance.}\\
+\\
+\textit{Key words:} Peter Principle, Dilbert Principle, Agent Based Models, Hierarchology, Organizations Efficiency.
+
+\section{Introduction}
+We shall first explain what are the Dilbert and Peter principles, before we move on to modelling.
+
+\subsection{The Dilbert Principle}
+\label{dilbert}
+Scott Adams in his book "The Dilber Principle" \cite{dilbert} presented\footnote{Adams presented it in a satirical way.} his famous principle:
+
+\begin{quote}
+leadership is nature's way of removing morons from the productive flow
+\end{quote}
+
+One could check \cite{dilbert} for more on this. This principle has a similar formulation under what's called "Putt's Law" \cite{putt}. What Dilbert principle states in that in essence all the work is done on the lower level of the corporate hierarchy, and therefore incompetent people tend to get promoted in order to get work done on the lower level by more competent people.\\
+\\
+This principle seems quite crude and contrary to the popular belief. We'll try to show in this article how - when this principle applies - is actually not that crude and give what we think its correct interpretation.
+
+\subsection{The Peter Principle}
+\label{peterprinciple}
+
+\begin{quote}
+In a hierarchy every employee tends to rise to his level of incompetence
+\end{quote}
+
+This was formulated in 1969 by Laurence Peter and Raymond Hull in their book: "The Peter Principle" \cite{peter}. This principle is based on the following assumption called "Peter Hypothesis" \cite{petercomp}:
+
+\begin{quote}
+Actually, the simple observation that a new position in the organization requires different work skills for effectively performing the new task (often completely different from the previous one), could suggest that the competence of a member at the new level could not be correlated to that at the old one. Peter speculated that we may consider this new degree of competence as a random variable, even taking into account any updating course the organization could require before the promotion: this is what we call the Peter hypothesis.
+\end{quote}
+
+What this means is that, the competence required at a certain level is completely decorrelated from the one needed at another level. In particular, the competence needed when one gets promoted is completely different from the one someone used to have. One can easily guess that under this kind of assumption, the best strategy would be to promote the least competent employee as shown in \cite{petercomp}. This is a consequence of the fact that each time we promote someone, we are resetting competence to the average competency\footnote{If it's a random variable, we basically resimulate this variable as if we are hiring a new person}. This would mean that if we promote the least competent, we are bringing them from the low end of the spectrum to the medium end, while if we promote the most competent one, we are bringing them from the top of the spectrum to the middle.\\
+\\
+What would this mean in practical terms, is that we are resetting his competence, and we know that the most competent employee is competent for their role, we better give the least competent employee a chance to prove themselve at a higher level, where their competence may be of value. If this works good, then we are happy and stop promoting them. Otherwise, if it went really bad, we dismiss them, and otherwise, we promote them more!\\
+\\
+That is definitely not what people expect, especially that promotion in the popular culture is considered a reward. But under this hypothesis, promotion is rather a way - of as Adams puts it - of removing morons from the productive flow (check ~\ref{dilbert}).
+
+\section{Previous work}
+This article will try to extend the analysis started in \cite{petercomp}, and will use the same tool (namely NetLogo \cite{netlogo}) to simulate our model. \cite{petercomp} has done an extraordinary work simulating this principle, and drawing some useful conclusions. A lot of work has been done around this principle with various approaches (\cite{faria}, \cite{dilbert-pete}, \cite{lazear}, \cite{vladan}, \cite{logistic}, to name a few). \cite{petercomp} simulated 2 scenarios:
+
+\begin{itemize}
+\item Peter Hypothesis as outlined in ~\ref{peterprinciple}.
+\item Common Sense Hypothesis which stipulates that up to $\pm 10\%$, the competence needed in one level is common to the level below it\footnote{And therefore above it as well}.
+\end{itemize}
+
+And \cite{petercomp} concludes that under the Peter Hypothesis scenario, the company is better off promoting the least competent as expected. And under the Common Sense Hypothesis, the company is better off promoting the most competent. And they conclude that by having an alternating strategy, we get the best of both worlds, especially if we can calibrate the alternating parameter. We think that this work has set the way, and have formalized a complex topic, but we think they failed first to assess which of the 2 hypothesis apply most in the real world\footnote{This article will not go into this either}, and more importantly, they failed to account for some important parameters in our view (Please check ~\ref{model}).
+
+
+\section{Model Description}
+\label{model}
+
+This article will extend the model featured in \cite{petercomp} with the following parameters:
+
+\begin{itemize}
+\item The dimissal level is now a function of the seniority level. ~\ref{dismissal}
+\item Employees gain experience in their job, and therefore are more competent with time. ~\ref{experience}
+\item We introduced a "happiness" factor for the employees, which they gain when they get promoted and lose otherwise. This will impact their competence. ~\ref{happiness}
+\item Unhappy competent employees can leave the firm to work for a competitor. ~\ref{resign}
+\item The competence level of employees at a certain level will impact the efficiency of their boss as well as their subordinates. ~\ref{managersubord}
+\end{itemize}
+
+We shall first examine the behavior of the model that is more or less common with \cite{petercomp}, and then move on to see the additional elements (~\ref{additional}.
+
+\subsection{Dynamical rules of the model}
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.9]{hierarchy}
+\caption{Schematic view of a hierarchical pyramidal organization. We consider here an organization with 160 positions divided into six levels. Each level has a different number of members (which decreases climbing the hierarchy) with a different responsibility, i.e. with a different weight on the global efficiency of the organization, reported on the left side. The member colour indicates the degree of competence. On the right side, we can see the dismissal threshold per level, it starts at 4 and increases by 0.5 by level Above, you can see the efficiency of this particular sample.}
+\label{fig:organization}
+\end{center}
+\end{figure}
+
+
+We have a pyramidal organization shown in ~\ref{fig:organization}, with a total of 160 positions distributed over six levels (6 is the lowest one, and 1 the highest) as follows:
+
+\begin{itemize}
+\item 1 in level 1
+\item 5 in level 2
+\item 11 in level 3
+\item 21 in level 4
+\item 41 in level 5
+\item 81 in level 1
+\end{itemize}
+
+Each agent is characterized by the following properties:
+
+\begin{enumerate}
+\item age
+\item level (seniority level)
+\item competence
+\item happiness\footnote{This is a new feature of our model}, please check ~\ref{happiness}.
+\end{enumerate}
+
+\subsubsection{Competence}
+\label{stcompetence}
+Competence is one of the most important variable in the model, and represents all features that make an employee competent. It varies between the minimum dismissal level for the particular seniority and 10 (it's a float), and initially it's a truncated normal variable with a mean of 7.0 and standard deviation of 2.0. It's graphically represented with yellow representing below dismissal level competence, green perfect competence (10), and red with increasing intensity for the rest. The dismissal level is set at 4 for the lowest level, and we'll see in ~\ref{dismissal} it increases by 0.5 per level.
+
+\subsubsection{Age}
+Age is an integer ranging between 25 and the retirement level which is set to 65 in our simulation. At first, we start with age specific per level, so 25 at the lowest level then increasing by 5 per level, this does not really impact the behavior of the model. Then at every turn, the age increases by 1, and when an employee reaches the retirement age, they would retire. A person that has reached retirement age will become yellow in color. Empty positions will be filled by promoting one member from the level immediately below, going down progressively from the top of the hierarchy until the bottom level has been reached. Empty positions at the bottom are filled with new hires with a competence drawn as in ~\ref{stcompetence} and an age of 25\footnote{That could be changed to add experienced hires from other companies}.
+
+\subsubsection{Competence Transmission}
+Competence Transmission is determined by a parameter "ratio-comp-kept-perc" which determines the fraction of competence kept after promotion, the formula to compute the competence after promotion is the following:
+
+\begin{equation}
+NC = \rho * OC + (1 - \rho) * RC
+\end{equation}
+
+Where:
+
+\begin{tabular}{l l}
+$NC$     & New Competence \\
+$OC$     & Old Competence \\
+$RC$     & Random Competence drawn as in ~\ref{stcompetence} \\
+$\rho$ & is the parameter "ratio-comp-kept-perc" divided by 100 \\
+\end{tabular}
+
+So in order to get "Peter Hypothesis" we set "ratio-comp-kept-perc" to 0, and to get the "Common Sense" we set it to 90.
+
+\subsubsection{Promotion}
+Promotion is determined by a drop down "promotion-criteria", which can be set to:
+
+\begin{enumerate}
+\item Most Competent
+\item Least Competent
+\item Random
+\item Alternating Strategy
+\end{enumerate}
+
+The last method will alernate between Most and Least competent according to a set ratio.
+
+\subsubsection{Efficiency}
+In order to compare the different strategies, and see which one is best, we need a certain measure, this is the efficiency. If we denote by $c_{i,j}$ the competence of the $j$-th employee at level $i$, $n_i$ the number of employees at level $i$, and by $w_i$ the weight of level $i$ as determined by figure ~\ref{fig:organization}, then efficiency is the following:
+
+\begin{equation}
+\label{eq:efficiency}
+Eff = \frac{\sum_i w_i * \sum_j c_{i,j}}{\sum_i n_i * w_i}
+\end{equation}
+
+We will see later how this efficiency will be altered when we introduce the Impact of managers and subordinates in ~\ref{managersubord}.
+
+\subsection{Additional features}
+\label{additional}
+
+\subsubsection{Dimissal level function of the seniority level}
+\label{dismissal}
+We shall set a minimum competence to have in order for an employee to keep his job. But what will be different in this article, is that this threshold is level-dependent. Our simulations showed that this factor can actually substantively influence the end result. Making the dismissal random instead of deterministic does not impact the results. This is motivated by the fact that in most of the modern corporate culture\footnote{Which is linked to the mainstream thinking that the more senior you are, the more competitive it is}, we ask for more from managers than from lower level employees, and therefore we expect the dismissal level to be an increasing function of the seniority level. But the model is flexible enough to have the same dismissal level for all, or a decreasing function, or whatever one may wish. In our case, we shall make an increasing function starting at 4, and increasing by 0.5 per level (Check ~\ref{fig:organization}).
+
+\subsubsection{Experience}
+\label{experience}
+Without experience, there is no difference between an entry-level employee and one with many years working in the domain. That is clearly not the case in the real world. Not factoring for experience would put the people we hire at the first level on equal footing to the CEO, and the model would have no dynamic behavior. An employee that does not get promoted will see their competence stagnate. This will be driven by the parameter "experience-gain-percentage". If the employee is already at the highest level, they will earn no more competence from experience, otherwise the model is skewed, and this will add no further information. The dynamics of this evolution is the following:
+
+\begin{equation}
+NC = MIN(OC(1 + exp), 10)
+\end{equation}
+
+Where:
+
+\begin{tabular}{l l}
+$NC$  & New Competence \\
+$OC$  & Old Competence \\
+$exp$ & "experience-gain-percentage"  /100 \\
+\end{tabular}
+
+\subsubsection{Happiness}
+\label{happiness}
+Some employees, although competent, just do not perform well due to their unhappiness with the working conditions. This factor is way too complex to model in this simplistic model, but we shall be interested in one particular aspect. Since we are looking at promotions in this article, we shall examine unhappiness coming from the fact that an employee did not get promoted although they thought they should have been. Namely, the more competent will want more badly to get promoted and will therefore be less happy if they don't. This happiness factor shall influence their competence positively or negatively. We shall stipulate that there is a threshold happiness level, such that if someone is happier than that level, they will gain competence, and otherwise lose. We shall also see another impact of happiness in ~\ref{resign}.\\
+\\
+Happiness will be between $0$ and $1$, at the highest level, the employee's happiness is always $1$. Otherwise, it's governed by "unhappiness-not-prom-perc", denoting by:
+
+\begin{tabular}{l l}
+$NH$ & New happiness       \\
+$OH$ & Old happiness       \\
+$C$  & Competence          \\
+$D$  & Dismissal threshold \\
+$f$  & "unhappiness-not-prom-perc" / 100 \\
+\end{tabular}
+
+We get:
+
+\begin{equation}
+NH = MAX(OH * \left[1 - (C - D) * f\right], 0)
+\end{equation}
+
+This happiness factor will influence the competence of the employee with the parameters "impact-happ-comp-perc", and "thres-happiness":
+
+\begin{equation}
+NC = MAX(MIN(OC * \left[1 + (H - TH) * I\right], 10), 0)
+\end{equation}
+
+Where:
+
+\begin{tabular}{l l}
+$NC$ & New Competence \\
+$OC$ & Old Competence \\
+$H$  & Happiness \\
+$TH$ & Threshold Happiness ("thres-happiness") \\
+$I$  & "impact-happ-comp-perc" / 100 \\
+\end{tabular}
+
+
+\subsubsection{Resigning}
+\label{resign}
+When competent employees do not get promoted, they tend to be unhappy, and can be unhappy to a point that they will leave the firm. Since it's competent\footnote{It's actually probabilistic, but the distribution is skewed towards the most competent} people who will leave, this will have an impact on the overall competence level of the firm and therefore on its efficiency. This will have mostly an impact on the scenario where we promote the least competent person since this will make the most competent very disgruntled. This feature along with experience (as seen in ~\ref{experience}) can produce some interesting resuts. An employee will resign according to this probability:
+
+\begin{eqnarray}
+P(resign) &=& \frac{C * (TH - H) * P(find)}{TH} \\
+P(find)   &=& \frac{C - D}{10 - D}
+\end{eqnarray}
+
+Where:
+\begin{tabular}{l l}
+P(resign) & Probability of resigning \\
+P(find)   & Probability of finding another job\footnote{Of course an unhappy incompetent employee, although wants to leave, cannot leave} \\
+$C$ & Competence \\
+$TH$ & Threshold happiness \\
+$H$ & Happiness \\
+$D$ & Dismissal threshold \\
+\end{tabular}
+
+\subsubsection{Impact of managers and subordinates}
+\label{managersubord}
+\cite{petercomp} used an additive way to calculate tue contribution of the different levels to the overall efficiency level. Although the weight is bigger on the higher hierarchy levels than the lower ones, \cite{dilbert-pete} thinks that this is not enough. We agree, but instead of pursuing the multiplicative way taken by \cite{dilbert-pete}, we shall integrate this impact directly into the computation of the individual efficiency, and calculate the overall efficiency as in \cite{petercomp}. We believe this to be more suited, and will allow for both the manager influencing their subordinates, and the subordinates influencing their manager. This is governed by $2$ parameters: "impact-senior-junior" which is the impact the manager has on their subordinate, and "impact-junior-senior" which will be the impact of the subordinate on their manager\footnote{We would expect this one to be lower.}. Those $2$ parameters will impact equation ~\ref{eq:efficiency} by changing the $c_{i,j}$ to $C_{i,j}$:
+
+\begin{eqnarray}
+\label{eq:impact}
+C_{i,j} &=& MIN(c_{i,j} * (1 + SJ_{i,j}) * (1 + JS_{i,j}), 10) \\
+SJ_{i,j} &=& \left(\frac{SE_i}{c_{i,j}} - 1 \right) * ISJ \\
+JS_{i,j} &=& \left(\frac{JE_i}{c_{i,j}} - 1 \right) * IJS \\
+SE_i &=& \frac{\sum_j c_{i+1,j}}{n_{i+1}} \\
+JE_i &=& \frac{\sum_j c_{i-1,j}}{n_{i-1}}
+\end{eqnarray}
+
+Where:
+\begin{tabular}{l l}
+$IJS$ & "impact-junior-senior" / 100 \\
+$ISJ$ & "impact-senior-junior" / 100 \\
+$n_i$ & Number of employees at level $i$  \\
+\end{tabular}
+
+One could deduce the reasoning from the above equations ~\ref{eq:impact}
+
+\section{Simulation results}
+All the simulation were done using the agent based simulation software NetLogo \cite{netlogo}. Since we did not share the code with \cite{petercomp}, we shall first try to replicate their result, and if we match, we would be confident about out base scenatio, and then we will see the impact of our additional parameters (See ~\ref{additional}).
+
+\subsection{Base Scenario}
+\label{base}
+We simulate using the scenario of \cite{petercomp}, but unlike them we randomize the start scenario, but in order to have the plot consistent, we will rescale them to the same initial configuration. And instead of taking an average of $50$ runs as was done in \cite{petercomp}, we shall just draw a polynomial of degree $6$ trendline. We get the result in figure ~\ref{fig:base}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{base}
+\caption{Efficiency time evolution for different strategies on the base scenario. We simulate the $2$ hypothesis, Peter Hypothesis and, Common Sense. We will have $3$ promotion criterias: The Most Competent, The Least Competent, and Random. The efficiency is plotted for $1000$ time steps. Please check text for more details.}
+
+
+\label{fig:base}
+\end{center}
+\end{figure}
+
+Those results seems satisfactory as they match the one seen in \cite{petercomp}. Now that we have our base scenario, we shall see the impact of each of the additional parameter, and judge its relevance.
+
+\subsection{Additional Parameters}
+Now we shall look at the impact of all the additional parameters detailed in ~\ref{additional}.
+
+\subsubsection{Dimissal level function of the seniority level}
+We shall do the same set of tests as in ~\ref{base}, and we shall have $2$ scenarios:
+
+\begin{enumerate}
+\item Increasing level of dismissal, ~\ref{inc}.
+\item Decreasing level of dismissal, ~\ref{dec}.
+\end{enumerate}
+
+\paragraph{Increasing level}
+\label{inc}
+Here, we shall set the dismissal level starting at $4$ increasing by $0.5$ per level. We find the results shown in figure %~\ref{fig:inc}.
+
+\paragraph{Decreasing level}
+\label{dec}
+As for here, we shall also start at $4$ but decrease by $0.5$ per level.
+
+\paragraph{Conclusion}
+
+
+\bibliographystyle{alphadin}
+\bibliography{document}
+
+
+\end{document}
